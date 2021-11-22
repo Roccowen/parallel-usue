@@ -15,7 +15,7 @@
 /// <param name="size">Количество потоков</param>
 /// <returns></returns>
 int** mpiMatrixMultiply(int** a, int** b, int aRows, int aCols, int bRows, int bCols, int size);
-void mpiMatrixMultiplyTest(int size);
+void mpiMatrixMultiply(int size);
 void mpiSort(std::vector<int>& arr);
 double mpiRectangleMethod(double (*F)(double), double a, double b, int n);
 double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n);
