@@ -5,33 +5,134 @@
 
 using namespace std;
 
+#include "MPIUtilities.h"
 #include "MPITest.h"
+#include <iostream>
 
 int** mpiMatrixMultiply(int** a, int** b, int aRows, int aCols, int bRows, int bCols, int size)
 {
-    auto aLocal = new int[aRows * aCols / size];
-    auto cLocal = new int[aRows * bCols / size];
-    int temp;
-    
-    int** с = new int* [aRows];
+    if (size != aRows)
+        throw new exception(" оличество доступных потоков и строчек матрицы должно совпадать!");
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int** c = new int* [aRows];
     for (int i = 0; i < aRows; ++i)
-        с[i] = new int[bCols];
-   
-    MPI_Scatter(a, aRows * aCols / size, MPI_INT, aLocal, aRows * aCols / size, MPI_INT, 0, MPI_COMM_WORLD);
+        c[i] = new int[bCols];
+
+    auto aa = new int[aCols];
+    auto cc = new int[bCols];
+    int  sum = 0;
+
+    MPI_Scatter(a, aCols, MPI_INT, aa, aCols, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(b, bRows * bCols, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
-
-    for (int i = 0; i < bRows; i++)
+    for (int i = 0; i < aCols; i++)
     {
-        for (int j = 0; j < bCols; j++)
-            temp += aLocal[j] * b[j][i];
-        cLocal[i] = temp;
-        temp = 0;
+        cout << "5 - " << rank << endl;
+        for (int j = 0; j < bRows; j++) {
+            cout << "6 - " << rank << endl;
+            sum += aa[j] * b[j][i];
+        }
+        cout << "7 - " << rank << endl;
+        cc[i] = sum;
+        sum = 0;
+    }
+    
+    MPI_Gather(cc, aRows * bCols / size, MPI_INT, c, aRows * bCols / size, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << "8" << endl;
+    return c;
+}
+void mpiMatrixMultiplyTest(int size) {
+
+    const int arows = 8;
+    const int acols = 8;
+    const int brows = 8;
+    const int bcols = 8;
+    
+    if (arows % size != 0)
+        throw new exception("‘игн€ кака€-то, переделывай");
+
+    int sum = 0;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int a[arows][acols];
+    int b[brows][bcols];
+
+    int partSize = arows * acols / size;
+    int partRowsCount = arows / size;
+
+    if (rank == 0)
+    {
+        cout << "A" << endl;
+        for (size_t i = 0; i < arows; i++) {
+            for (size_t j = 0; j < acols; j++) {           
+                a[i][j] = randomInt();
+                cout << a[i][j] << " ";
+            }
+            cout << endl;
+        }
+
+        cout << "B" << endl;
+        for (size_t i = 0; i < brows; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                b[i][j] = randomInt();
+                cout << b[i][j] << " ";
+            }
+            cout << endl;
+        }
     }
 
-    MPI_Gather(cLocal, aRows * bCols / size, MPI_INT, с, aRows * bCols / size, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
-    return с;
+
+    int c[arows][bcols];
+    auto aa = new int[partRowsCount][acols];
+    auto cc = new int[partSize];
+   
+    MPI_Scatter(a, partSize, MPI_INT, aa, partSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(b, brows * bcols, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    if (rank == 0)
+    {
+        cout << endl;
+        for (size_t i = 0; i < partRowsCount; i++) {
+            for (size_t j = 0; j < acols; j++) {
+                cout << aa[i][j] << " ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+
+    for (int i = 0; i < partRowsCount; i++)
+    {
+        for (int j = 0; j < acols; j++)
+        {
+            for (int s = 0; s < brows; s++)
+                //sum += aa[j + (acols * i)] * b[j][i];
+            cc[i + (acols * i)] = sum;
+            sum = 0;
+        }
+    }
+
+
+    MPI_Gather(cc, partSize, MPI_INT, c, partSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if (rank == 0)
+    {
+        cout << "C" << endl;
+        for (size_t i = 0; i < arows; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << c[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
 }
 void mpiSort(vector<int>& arr)
 {

@@ -10,5 +10,3 @@ std::vector<int> vectorRandom(int count);
 std::vector<std::vector<int>> vectorRandom(int rows, int cols);
 
 #endif // !UTILITIES
-
-

@@ -21,7 +21,7 @@
     <ClCompile Include="MPITest.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities.cpp">
+    <ClCompile Include="MPIUtilities.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="MPITest.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities.h">
+    <ClInclude Include="MPIUtilities.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
