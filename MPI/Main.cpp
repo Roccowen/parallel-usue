@@ -4,35 +4,47 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <mpi.h>
+#include <vector>
 
 using namespace std;
 
-#include "MPITest.h"
 #include "MPIUtilities.h"
 
 void mpiMatrixMultiply(int size, int rank);
+void mpiSort(vector<int>& arr);
+double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n);
+double mpiRectangleMethod(double (*F)(double), double a, double b, int n);
 
 int MIN = 0;
 int MAX = 10;
 const double PI = 3.141592;
 
+#pragma region MPI_Matrix_multiply_variables
 const int arows = 500;
 const int acols = 500;
 const int brows = 500;
 const int bcols = 500;
-const int rowsPerProccess = 125; // arows/size
-
-static int a[arows][brows];
+const int rowsPerProccess = 125; // rowsPerProccess = arows/size
+static int a[arows][acols];
 static int b[brows][bcols];
 int c[arows][bcols];
+#pragma endregion
+#pragma region MPI_Sort_varizbles
+
+#pragma endregion
+#pragma region MPI_Math_variables
+
+#pragma endregion
 
 int main(int argc, char* argv[])
 {
-    double start, end;
+    double start, end; // Timer
     int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+#pragma region MPI_Matrix_multiply
     if (rank == 0)
     {
         for (size_t i = 0; i < arows; i++)
@@ -48,9 +60,15 @@ int main(int argc, char* argv[])
     mpiMatrixMultiply(size, rank);
     if (rank == 0) {
         end = MPI_Wtime();
-        cout << abs(start - end) << endl;
+        cout << "Matrix mult "<< arows << "x" << acols << " * " << brows << "x" << bcols << " - " << abs(start - end) << " sec" << endl;
     }
+#pragma endregion
+#pragma region MPI_Sort
 
+#pragma endregion
+#pragma region MPI_Math
+
+#pragma endregion
 
     MPI_Finalize();
 }
@@ -82,40 +100,39 @@ void mpiMatrixMultiply(int size, int rank) {
             sum = 0;
         }
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     MPI_Gather(cc, resultSize, MPI_INT, c, resultSize, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 }
-
-//void mpiSort(vector<int>& arr)
-//{
-//    int length = arr.size();
-//    int* arrayPtr = &arr[0];
-//    int temp,
-//        item;
-//    for (int counter = 1; counter < length; counter++)
-//    {
-//        temp = arrayPtr[counter];
-//        item = counter - 1;
-//        while (item >= 0 && arrayPtr[item] > temp)
-//        {
-//            arrayPtr[item + 1] = arrayPtr[item];
-//            arrayPtr[item] = temp;
-//            item--;
-//        }
-//    }
-//}
-//double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n) {
-//    double step = (b - a) / n;
-//    double result = 0;
-//    for (double x = a + step; x < b; x += step)
-//        result += F(x);
-//    return (result + F(a) / 2 + F(b) / 2) * step;
-//}
-//double mpiRectangleMethod(double (*F)(double), double a, double b, int n) {
-//    double step = (b - a) / n;
-//    double result = 0;
-//    for (double x = a + step; x <= b; x += step)
-//        result += F(x);
-//    return result * step;
-//}
+void mpiSort(vector<int>& arr)
+{
+    int length = arr.size();
+    int* arrayPtr = &arr[0];
+    int temp,
+        item;
+    for (int counter = 1; counter < length; counter++)
+    {
+        temp = arrayPtr[counter];
+        item = counter - 1;
+        while (item >= 0 && arrayPtr[item] > temp)
+        {
+            arrayPtr[item + 1] = arrayPtr[item];
+            arrayPtr[item] = temp;
+            item--;
+        }
+    }
+}
+double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n) {
+    double step = (b - a) / n;
+    double result = 0;
+    for (double x = a + step; x < b; x += step)
+        result += F(x);
+    return (result + F(a) / 2 + F(b) / 2) * step;
+}
+double mpiRectangleMethod(double (*F)(double), double a, double b, int n) {
+    double step = (b - a) / n;
+    double result = 0;
+    for (double x = a + step; x <= b; x += step)
+        result += F(x);
+    return result * step;
+}
