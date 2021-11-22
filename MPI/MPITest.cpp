@@ -2,12 +2,12 @@
 #include <random>
 #include <mpi.h>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
 #include "MPIUtilities.h"
 #include "MPITest.h"
-#include <iostream>
 
 int** mpiMatrixMultiply(int** a, int** b, int aRows, int aCols, int bRows, int bCols, int size)
 {
@@ -50,11 +50,17 @@ void mpiMatrixMultiplyTest(int size) {
     const int arows = 8;
     const int acols = 8;
     const int brows = 8;
-    const int bcols = 8;
-    
-    if (arows % size != 0)
-        throw new exception("Фигня какая-то, переделывай");
+    const int bcols = 1;
 
+    //int partRowsCount = arows / size;
+    const int partRowsCount = 2;
+
+    if (arows % size != 0)
+        throw new exception("Количество строчек должно быть кратно количеству процессов");
+    if (acols != brows)
+        throw new exception("Нельзя перемножить");
+    
+    int matrixSize = acols;
     int sum = 0;
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -62,11 +68,12 @@ void mpiMatrixMultiplyTest(int size) {
     int b[brows][bcols];
 
     int partSize = arows * acols / size;
-    int partRowsCount = arows / size;
-
+    cout << rank << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+    //print A and B
     if (rank == 0)
     {
-        cout << "A" << endl;
+        cout << "\tA" << endl;
         for (size_t i = 0; i < arows; i++) {
             for (size_t j = 0; j < acols; j++) {           
                 a[i][j] = randomInt();
@@ -75,7 +82,7 @@ void mpiMatrixMultiplyTest(int size) {
             cout << endl;
         }
 
-        cout << "B" << endl;
+        cout << "\tB" << endl;
         for (size_t i = 0; i < brows; i++) {
             for (size_t j = 0; j < bcols; j++) {
                 b[i][j] = randomInt();
@@ -89,12 +96,24 @@ void mpiMatrixMultiplyTest(int size) {
 
     int c[arows][bcols];
     auto aa = new int[partRowsCount][acols];
-    auto cc = new int[partSize];
+    auto cc = new int[partRowsCount][bcols];
    
     MPI_Scatter(a, partSize, MPI_INT, aa, partSize, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(b, brows * bcols, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     
+    if (rank == 1)
+    {
+        cout << "\tB in 1" << endl;
+        for (size_t i = 0; i < brows; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << b[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    //print aa from 0
     if (rank == 0)
     {
         cout << endl;
@@ -107,27 +126,80 @@ void mpiMatrixMultiplyTest(int size) {
         cout << endl;
     }
 
+    //calc
     for (int i = 0; i < partRowsCount; i++)
-    {
-        for (int j = 0; j < acols; j++)
-        {
-            for (int s = 0; s < brows; s++)
-                //sum += aa[j + (acols * i)] * b[j][i];
-            cc[i + (acols * i)] = sum;
+        for (int j = 0; j < bcols; j++) {
+            for (int s = 0; s < matrixSize; s++)
+                sum += aa[i][s] * b[s][j];
+            cc[i][j] = sum;
             sum = 0;
         }
-    }
 
-
-    MPI_Gather(cc, partSize, MPI_INT, c, partSize, MPI_INT, 0, MPI_COMM_WORLD);
+    //input local CC
     MPI_Barrier(MPI_COMM_WORLD);
-
     if (rank == 0)
     {
-        cout << "C" << endl;
+        cout << "\tCC-" << rank << endl;
+        for (size_t i = 0; i < partRowsCount; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << cc[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 1)
+    {
+        cout << "\tCC-" << rank << endl;
+        for (size_t i = 0; i < partRowsCount; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << cc[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 2)
+    {
+        cout << "\tCC-" << rank << endl;
+        for (size_t i = 0; i < partRowsCount; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << cc[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 3)
+    {
+        cout << "\tCC-" << rank << endl;
+        for (size_t i = 0; i < partRowsCount; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                cout << cc[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    // print c from 0;
+    MPI_Gather(cc, partSize, MPI_INT, c, partSize, MPI_INT, 0, MPI_COMM_WORLD);
+    if (rank == 0)
+    {
+        cout << "\tC" << endl;
         for (size_t i = 0; i < arows; i++) {
             for (size_t j = 0; j < bcols; j++) {
                 cout << c[i][j] << " ";
+            }
+            cout << endl;
+        }
+        cout << "\tCorrect C" << endl;
+        for (size_t i = 0; i < arows; i++) {
+            for (size_t j = 0; j < bcols; j++) {
+                for (size_t s = 0; s < acols; s++)
+                    sum += a[i][s] * b[s][j];
+                cout << sum << " ";
+                sum = 0;
             }
             cout << endl;
         }

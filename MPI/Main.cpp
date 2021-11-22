@@ -14,10 +14,11 @@ void MPITest(int argc, char* argv[]);
 
 const double PI = 3.141592;
 int MIN = 0;
-int MAX = 100;
+int MAX = 10;
 
 int main(int argc, char* argv[])
 {
+
     MPITest(argc, argv);
 }
 
@@ -53,4 +54,3 @@ void MPITest(int argc, char* argv[]) {
 
     MPI_Finalize();
 }
-
