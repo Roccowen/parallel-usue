@@ -5,13 +5,14 @@
 #include <stdlib.h> 
 #include <mpi.h>
 #include <vector>
+#include <random>
 
 using namespace std;
 
 #include "MPIUtilities.h"
 
 void mpiMatrixMultiply(int size, int rank);
-void mpiSort(vector<int>& arr);
+void mpiSort(int size, int rank);
 double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n);
 double mpiRectangleMethod(double (*F)(double), double a, double b, int n);
 
@@ -64,7 +65,24 @@ int main(int argc, char* argv[])
     }
 #pragma endregion
 #pragma region MPI_Sort
+    const int tlenght = 500;
+    const int numsPerProccess = 125; // numsPerProccess = tlenght/size
+    static vector<int> t(tlenght);
+    static int r[tlenght];
 
+    if (rank == 0)
+    {
+        for (size_t i = 0; i < tlenght; i++)
+            t[i] = randomInt();
+        if (rank == 0)
+            start = MPI_Wtime();
+        mpiSort(size, rank);
+        if (rank == 0) {
+            end = MPI_Wtime();
+            cout << "Sort " << tlenght << " - " << abs(start - end) << " sec" << endl;
+            printArray(r, tlenght);
+        }
+    }
 #pragma endregion
 #pragma region MPI_Math
 
@@ -83,11 +101,10 @@ void mpiMatrixMultiply(int size, int rank) {
     int matrixSize = acols;    
     int partSize = arows * rowsPerProccess;
     int resultSize = arows * bcols / size;
-    MPI_Barrier(MPI_COMM_WORLD);
-
     auto aa = new int[rowsPerProccess][acols];
     auto cc = new int[rowsPerProccess][bcols];
-
+    
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Scatter(a, partSize, MPI_INT, aa, partSize, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(b, brows * bcols, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
@@ -104,23 +121,25 @@ void mpiMatrixMultiply(int size, int rank) {
     MPI_Gather(cc, resultSize, MPI_INT, c, resultSize, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 }
-void mpiSort(vector<int>& arr)
+void mpiSort(vector<int> a, int size, int rank)
 {
-    int length = arr.size();
-    int* arrayPtr = &arr[0];
-    int temp,
-        item;
-    for (int counter = 1; counter < length; counter++)
+    static vector<int> aa(a.size() / size);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Scatter(a.data(), numsPerProccess, MPI_INT, aa, numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    sort(aa[0], aa[numsPerProccess - 1]);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Gather(aa, numsPerProccess, MPI_INT, c, numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if (rank == 0)
     {
-        temp = arrayPtr[counter];
-        item = counter - 1;
-        while (item >= 0 && arrayPtr[item] > temp)
-        {
-            arrayPtr[item + 1] = arrayPtr[item];
-            arrayPtr[item] = temp;
-            item--;
-        }
+        sort(r[0], r[tlenght - 1]);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n) {
     double step = (b - a) / n;
