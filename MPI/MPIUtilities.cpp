@@ -34,6 +34,13 @@ void printVector(vector<int> arr) {
         cout << i << " ";
     cout << endl;
 }
+void printVector(std::vector<std::vector<int>> matrix) {
+    for (auto i : matrix) {
+        for (auto j : i)
+            cout << j << " ";
+        cout << endl;
+    }
+}
 int* arrayRandom(int count)
 {
     auto arr = new int[count];

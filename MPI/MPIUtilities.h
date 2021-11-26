@@ -12,5 +12,6 @@ int* arrayRandom(int count);
 int** arrayRandom(int rows, int cols);
 std::vector<int> vectorRandom(int count);
 std::vector<std::vector<int>> vectorRandom(int rows, int cols);
+void printVector(std::vector<std::vector<int>> matrix);
 
 #endif // !MPIUTILITIES
