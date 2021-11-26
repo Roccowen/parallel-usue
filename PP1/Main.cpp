@@ -55,7 +55,7 @@ int main()
     setlocale(LC_ALL, "Russian");
     cout << setprecision(12);
 
-    serialTest();
+    //serialTest();
     PPLTest();
     OpenMpTest();
 }

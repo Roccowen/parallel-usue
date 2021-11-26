@@ -29,6 +29,11 @@ void printArray(int** arr, int arrRows, int arrColumns) {
         cout << endl;
     }
 }
+void printVector(vector<int> arr) {
+    for (int i : arr)
+        cout << i << " ";
+    cout << endl;
+}
 int* arrayRandom(int count)
 {
     auto arr = new int[count];
@@ -48,4 +53,21 @@ int** arrayRandom(int rows, int cols)
             arr2d[i][j] = randomInt();
 
     return arr2d;
+}
+vector<int> vectorRandom(int count)
+{
+    vector<int> random_vector(count);
+    for (size_t i = 0; i < count; i++)
+        random_vector[i] = randomInt();
+
+    return random_vector;
+}
+vector<vector<int>> vectorRandom(int rows, int cols)
+{
+    vector<vector<int> > random_vector(rows, vector<int>(cols));
+    for (size_t i = 0; i < rows; i++)
+        for (size_t j = 0; j < cols; j++)
+            random_vector[i][j] = randomInt();
+
+    return random_vector;
 }

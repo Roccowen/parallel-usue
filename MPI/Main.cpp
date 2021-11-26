@@ -12,9 +12,11 @@ using namespace std;
 #include "MPIUtilities.h"
 
 void mpiMatrixMultiply(int size, int rank);
-void mpiSort(int size, int rank);
+vector<vector<int>> mpiMatrixMultiply(vector<vector<int>> a, vector<vector<int>> b, int size, int rank);
+vector<int> mpiSort(vector<int> a, int size, int rank);
 double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n);
 double mpiRectangleMethod(double (*F)(double), double a, double b, int n);
+
 
 int MIN = 0;
 int MAX = 10;
@@ -46,42 +48,35 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 #pragma region MPI_Matrix_multiply
+    static vector<vector<int>> a;
+    static vector<vector<int>> b;
+    static vector<vector<int>> c;
     if (rank == 0)
     {
-        for (size_t i = 0; i < arows; i++)
-            for (size_t j = 0; j < acols; j++)
-                a[i][j] = randomInt();
-        for (size_t i = 0; i < brows; i++)
-            for (size_t j = 0; j < bcols; j++)
-                b[i][j] = randomInt();
+        a = vectorRandom(500, 500);
+        b = vectorRandom(500, 500);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if(rank == 0)
         start = MPI_Wtime();
-    mpiMatrixMultiply(size, rank);
+    c = mpiMatrixMultiply(a, b, size, rank);
     if (rank == 0) {
         end = MPI_Wtime();
         cout << "Matrix mult "<< arows << "x" << acols << " * " << brows << "x" << bcols << " - " << abs(start - end) << " sec" << endl;
     }
 #pragma endregion
 #pragma region MPI_Sort
-    const int tlenght = 500;
-    const int numsPerProccess = 125; // numsPerProccess = tlenght/size
-    static vector<int> t(tlenght);
-    static int r[tlenght];
-
+    static vector<int> t(500);
+    
     if (rank == 0)
     {
-        for (size_t i = 0; i < tlenght; i++)
-            t[i] = randomInt();
-        if (rank == 0)
-            start = MPI_Wtime();
-        mpiSort(size, rank);
-        if (rank == 0) {
-            end = MPI_Wtime();
-            cout << "Sort " << tlenght << " - " << abs(start - end) << " sec" << endl;
-            printArray(r, tlenght);
-        }
+        t = vectorRandom(500);
+    }
+    auto c1 = mpiSort(t, size, rank);
+    if (rank == 0) {
+        end = MPI_Wtime();
+        cout << "Sort " << 500 << " - " << abs(start - end) << " sec" << endl;
+        printVector(c1);
     }
 #pragma endregion
 #pragma region MPI_Math
@@ -90,7 +85,38 @@ int main(int argc, char* argv[])
 
     MPI_Finalize();
 }
-
+vector<vector<int>> mpiMatrixMultiply(vector<vector<int>> a, vector<vector<int>> b, int procCount, int rank) {
+    if (a.size() == 0 || b.size() == 0)
+        throw new exception("a и b должны иметь элементы");
+    int rows = a.size();
+    int size = a[0].size();
+    int cols = b[0].size();
+    if (rows % size != 0)
+        throw new exception("Количество строчек должно быть кратно количеству процессов");
+    if (a[0].size() != b.size())
+        throw new exception("Нельзя перемножить");
+    int sum = 0;
+    int rowsPerProccess = rows / procCount;
+    int resultSize = rows * cols / procCount;
+    vector<vector<int>> aa(rowsPerProccess, vector<int>(size));
+    vector<vector<int>> cc(rowsPerProccess, vector<int>(cols));
+    vector<vector<int>> c(rows, vector<int>(cols));
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Scatter(a.data(), rowsPerProccess, MPI_INT, aa.data(), rowsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(b.data(), size * cols, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    for (int i = 0; i < rowsPerProccess; i++)
+        for (int j = 0; j < cols; j++) {
+            for (int s = 0; s < size; s++)
+                sum += aa[i][s] * b[s][j];
+            cc[i][j] = sum;
+            sum = 0;
+        }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Gather(cc.data(), resultSize, MPI_INT, c.data(), resultSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    return c;
+}
 void mpiMatrixMultiply(int size, int rank) {
     if (arows % size != 0)
         throw new exception("Количество строчек должно быть кратно количеству процессов");
@@ -121,25 +147,28 @@ void mpiMatrixMultiply(int size, int rank) {
     MPI_Gather(cc, resultSize, MPI_INT, c, resultSize, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 }
-void mpiSort(vector<int> a, int size, int rank)
+vector<int> mpiSort(vector<int> a, int size, int rank)
 {
-    static vector<int> aa(a.size() / size);
+    auto numsPerProccess = a.size() / size;
+    static vector<int> c(a.size());
+    static vector<int> aa(numsPerProccess);
     MPI_Barrier(MPI_COMM_WORLD);
     
-    MPI_Scatter(a.data(), numsPerProccess, MPI_INT, aa, numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(a.data(), numsPerProccess, MPI_INT, aa.data(), numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     
-    sort(aa[0], aa[numsPerProccess - 1]);
+    sort(aa.begin(), aa.end());
     MPI_Barrier(MPI_COMM_WORLD);
     
-    MPI_Gather(aa, numsPerProccess, MPI_INT, c, numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(aa.data(), numsPerProccess, MPI_INT, c.data(), numsPerProccess, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0)
     {
-        sort(r[0], r[tlenght - 1]);
+        sort(c.begin(), c.end());
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    return c;
 }
 double mpiTrapeziodalMethod(double (*F)(double), double a, double b, int n) {
     double step = (b - a) / n;

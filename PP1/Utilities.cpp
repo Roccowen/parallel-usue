@@ -17,17 +17,17 @@ int randomInt() {
 
     return uni(rng);
 }
-void printVector(vector<int> arr) {
-    for (int i : arr)
-        cout << i << " ";
-    cout << endl;
-}
 void printVector(std::vector<std::vector<int>> matrix) {
     for (auto i : matrix) {
         for (auto j : i)
             cout << j << " ";
         cout << endl;
     }
+}
+void printVector(vector<int> arr) {
+    for (int i : arr)
+        cout << i << " ";
+    cout << endl;
 }
 vector<int> vectorRandom(int count)
 {
