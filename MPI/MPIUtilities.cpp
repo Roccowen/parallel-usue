@@ -7,13 +7,14 @@
 
 using namespace std;
 
-extern int MIN;
-extern int MAX;
+//extern int MIN;
+//extern int MAX;
 
 int randomInt() {
     static std::random_device rd;                            // only used once to initialise (seed) engine
     static std::mt19937 rng(rd());                           // random-number engine used (Mersenne-Twister in this case)
-    static std::uniform_int_distribution<int> uni(MIN, MAX); // guaranteed unbiased
+    //static std::uniform_int_distribution<int> uni(MIN, MAX); // guaranteed unbiased
+    static std::uniform_int_distribution<int> uni(1, 100); // guaranteed unbiased
 
     return uni(rng);
 }
