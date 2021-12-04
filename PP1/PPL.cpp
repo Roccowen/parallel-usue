@@ -54,7 +54,7 @@ double parallelRectangleMethod(double (*F)(double), double a, double b, int n) {
     double step = (b - a) / n;
     double start = a + step;
     double stop = b;
-    double result = 0;
+    std::atomic<double> result = 0;
 
     Concurrency::parallel_for(0, n, 1, [&](int step_num)
         {
@@ -68,7 +68,7 @@ double parallelTrapeziodalMethod(double (*F)(double), double a, double b, int n)
     double step = (b - a) / n;
     double start = a + step;
     double stop = b;
-    double result = 0;
+    std::atomic<double> result = 0;
 
     Concurrency::parallel_for(0, n, 1, [&](int step_num)
         {

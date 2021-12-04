@@ -10,6 +10,7 @@
 #include <format>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
 
@@ -25,6 +26,7 @@ void matrixMultCompars(int matrixSize=500);
 void PPLTest();
 void OpenMpTest();
 void serialTest();
+void getAccuracy(int n);
 
 const double PI = 3.141592;
 int MIN = 0;
@@ -53,31 +55,43 @@ void printExecutionTime(string msg, Func f, Args&&... args) {
 int main()
 {
     setlocale(LC_ALL, "Russian");
-    cout << setprecision(12);
+    cout << setprecision(16);
+
+    getAccuracy(10);
 
     //serialTest();
-    PPLTest();
-    OpenMpTest();
+    //PPLTest();
+    //OpenMpTest();
+}
+// n - количество знаков после запятой
+void getAccuracy(int n) {
+    double prevR = -10, R = 10;
+    for (int i = 10; abs(R - prevR) > pow(10, -n); i += 1)
+    {
+        prevR = R;
+        R = rectangleMethod(F18, 0, PI / 6, i);
+        cout << "rectangleMethod при " << i << " итерациях, расхождение - "<< abs(R - prevR) << endl;
+    }
 }
 void mathCompars(int stepCount) {
     cout << "rectangleMethod " << rectangleMethod(F18, 0, PI / 6, stepCount) << endl;
     cout << "trapeziodalMethod " << trapeziodalMethod(F18, 0, PI / 6, stepCount) << endl;
     
-    printExecutionTime("Метод треугольников", rectangleMethod, F18, 0, PI / 6, stepCount);
+    printExecutionTime("Метод прямоугольников", rectangleMethod, F18, 0, PI / 6, stepCount);
     printExecutionTime("Метод трапеций", trapeziodalMethod, F18, 0, PI / 6, stepCount);
     cout << endl;
 
     cout << "parallelRectangleMethod " << parallelRectangleMethod(F18, 0, PI / 6, stepCount) << endl;
     cout << "parallelTrapeziodalMethod " << parallelTrapeziodalMethod(F18, 0, PI / 6, stepCount) << endl;
 
-    printExecutionTime("Параллельный метод треугольников", parallelRectangleMethod, F18, 0, PI / 6, stepCount);
+    printExecutionTime("Параллельный метод прямоугольников", parallelRectangleMethod, F18, 0, PI / 6, stepCount);
     printExecutionTime("Параллельный метод трапеций", parallelTrapeziodalMethod, F18, 0, PI / 6, stepCount);
     cout << endl;
 
     cout << "openmpRectangleMethod " << openmpRectangleMethod(F18, 0, PI / 6, stepCount) << endl;
     cout << "openmpTrapeziodalMethod " << openmpTrapeziodalMethod(F18, 0, PI / 6, stepCount) << endl;
 
-    printExecutionTime("OpenMP метод треугольников", openmpRectangleMethod, F18, 0, PI / 6, stepCount);
+    printExecutionTime("OpenMP метод прямоугольников", openmpRectangleMethod, F18, 0, PI / 6, stepCount);
     printExecutionTime("OpenMP метод трапеций", openmpTrapeziodalMethod, F18, 0, PI / 6, stepCount);
     cout << endl;
 }
@@ -160,7 +174,7 @@ void OpenMpTest() {
     cout << "parallelRectangleMethod " << openmpRectangleMethod(F18, 0, PI / 6, 100) << endl;
     cout << "parallelTrapeziodalMethod " << openmpTrapeziodalMethod(F18, 0, PI / 6, 100) << endl;
 
-    printExecutionTime("Параллельный метод треугольников", openmpRectangleMethod, F18, 0, PI / 6, 1000);
+    printExecutionTime("Параллельный метод прямоугольников", openmpRectangleMethod, F18, 0, PI / 6, 1000);
     printExecutionTime("Параллельный метод трапеций", openmpTrapeziodalMethod, F18, 0, PI / 6, 1000);
 
     cout << endl;
@@ -177,7 +191,7 @@ void PPLTest() {
     cout << "parallelRectangleMethod " << parallelRectangleMethod(F18, 0, PI / 6, 100) << endl;
     cout << "parallelTrapeziodalMethod " << parallelTrapeziodalMethod(F18, 0, PI / 6, 100) << endl;
     
-    printExecutionTime("Параллельный метод треугольников", parallelRectangleMethod, F18, 0, PI / 6, 1000);
+    printExecutionTime("Параллельный метод прямоугольников", parallelRectangleMethod, F18, 0, PI / 6, 1000);
     printExecutionTime("Параллельный метод трапеций", parallelTrapeziodalMethod, F18, 0, PI / 6, 1000);
 
     cout << endl;
@@ -198,7 +212,7 @@ void serialTest() {
     cout << "trapeziodalMethod " << trapeziodalMethod(F18, 0, PI / 6, 100) << endl;
     cout << "rectangleMethod " << rectangleMethod(F18, 0, PI / 6, 100) << endl;
 
-    printExecutionTime("Метод треугольников", rectangleMethod, F18, 0, PI / 6, 1000);
+    printExecutionTime("Метод прямоугольников", rectangleMethod, F18, 0, PI / 6, 1000);
     printExecutionTime("Метод трапеций", trapeziodalMethod, F18, 0, PI / 6, 1000);
 
     cout << endl;
