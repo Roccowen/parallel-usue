@@ -13,8 +13,6 @@ using namespace std;
 
 #include "MPIUtilities.h"
 
-#define MAX_SIZE 32764‬
-
 #define MPI_Matrix_multiply
 #define MPI_Sort
 #define MPI_Rectangle_Method
