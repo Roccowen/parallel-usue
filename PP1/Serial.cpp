@@ -1,6 +1,7 @@
 #include <vector>
 #include <random>
 #include "Serial.h"
+#include <iostream>
 
 using namespace std;
 
@@ -14,10 +15,15 @@ vector<vector<int>> matrixSimpleMultiply(vector<vector<int>> a, vector<vector<in
     int size = a[0].size();
     vector<vector<int> > c(rows, vector<int>(cols));
 
-    for (size_t i = 0; i < rows; i++)
-        for (size_t j = 0; j < cols; j++)
+    for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < cols; j++) {
             for (size_t s = 0; s < size; s++)
                 c[i][j] += a[i][s] * b[s][j];
+
+        }
+        cout << "Строчка - " << i << "x" << endl;
+    }
+            
 
     return c;
 }
