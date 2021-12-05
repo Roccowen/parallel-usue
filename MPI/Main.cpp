@@ -13,30 +13,31 @@ using namespace std;
 
 #include "MPIUtilities.h"
 
-#define MPI_Matrix_multiply
-#define MPI_Sort
-#define MPI_Rectangle_Method
-#define MPI_Trapeziodal_Method
-
-#ifdef MPI_Matrix_multiply
-#define arows 500
-#define acols 500
-#define brows 500
-#define bcols 500
+//#define MPI_Matrix_multiply
+//#define MPI_Sort
+//#define MPI_Rectangle_Method
+//#define MPI_Trapeziodal_Method
+#pragma region MPI_Matrix_multiply_variables
+#define arows 3800
+#define acols 3800
+#define brows 3800
+#define bcols 3800
 // rowsPerProccess = arows/size.
-#define rowsPerProccess 125  
+#define rowsPerProccess 475  
+#pragma endregion
+#ifdef MPI_Matrix_multiply
 static int a[arows][acols];
 static int b[brows][bcols];
 static int c[arows][bcols];
 #endif
 #ifdef MPI_Sort
-#define sortNumsCount 5000000
+#define sortNumsCount 41800
 #endif
 #ifdef MPI_Rectangle_Method
-#define stepsCount 1000
+#define stepsCount 50000
 #endif
 #ifdef MPI_Trapeziodal_Method
-#define stepsCount 1000
+#define stepsCount 50000
 #endif
 
 void mpiMatrixMultiply(int a[arows][acols], int b[brows][bcols], int c[arows][bcols], int size, int rank);
@@ -54,7 +55,7 @@ double F18(double x) {
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
-    cout << std::setprecision(12);
+    cout << std::setprecision(3);
     double start, end; // timer
     int rank, size;
     MPI_Init(&argc, &argv);
